@@ -2,12 +2,18 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { LlmModule } from './llm/llm.module';
+import { MemoryModule } from './memory/memory.module';
+import { GraphModule } from './graph/graph.module';
+import { AgentModule } from './agent/agent.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
+    LlmModule,
+    MemoryModule,
+    GraphModule,
+    AgentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

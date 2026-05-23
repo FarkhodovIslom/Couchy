@@ -83,6 +83,10 @@ export class AppService {
     };
   }
 
+  getSession(sessionId: string): Session | undefined {
+    return this.sessions.get(sessionId);
+  }
+
   getLearningPath(sessionId: string): LearningStep[] {
     return this.learningPaths.get(sessionId) || [];
   }
