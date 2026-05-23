@@ -14,7 +14,7 @@ export class LlmService {
     }
     this.genAI = new GoogleGenerativeAI(apiKey);
     // Gemini 3.5 Flash — GA since May 2026
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
   }
 
   /**
