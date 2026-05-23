@@ -1,9 +1,26 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { JetBrains_Mono, DM_Sans } from 'next/font/google';
+import './globals.css';
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains',
+  weight: ['400', '500'],
+  display: 'swap',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
+  weight: ['400', '500'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: "Couchy — AI-ассистент для командного обучения разработчиков",
-  description: "Живая память вашей команды с агентной логикой и базой знаний в реальном времени. Сократите онбординг разработчиков с 2 недель до 3 дней.",
+  title: 'Couchy — AI-ассистент для командного онбординга',
+  description:
+    'Живая память команды с агентной логикой. Сократите онбординг разработчиков с 2 недель до 3 дней.',
+  keywords: ['AI', 'onboarding', 'developer', 'knowledge graph', 'NestJS', 'Next.js'],
 };
 
 export default function RootLayout({
@@ -12,15 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="antialiased min-h-screen selection:bg-violet-500/30 selection:text-violet-200">
-        {children}
-      </body>
+    <html lang="ru" className={`${jetbrainsMono.variable} ${dmSans.variable}`}>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
