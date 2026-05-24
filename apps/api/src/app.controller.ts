@@ -9,7 +9,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import type { Response } from 'express-serve-static-core';
+import type { Response } from 'express';
 
 import { AgentService } from './core/agent/agent.service';
 import { OnboardingService } from './modules/onboarding/onboarding.service';

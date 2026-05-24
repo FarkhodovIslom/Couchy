@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Sse, Body, Res, HttpStatus } from '@nestjs/common';
-import type { Response } from 'express-serve-static-core';
+import type { Response } from 'express';
 import { Observable } from 'rxjs';
 import { MessageEvent } from '@nestjs/common';
 import { SimulationService } from './simulation.service';

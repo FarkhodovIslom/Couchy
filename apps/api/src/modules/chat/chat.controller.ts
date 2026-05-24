@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Body, Param, Res, HttpStatus, Logger } from '@nestjs/common';
-import type { Response } from 'express-serve-static-core';
+import type { Response } from 'express';
 import { AgentService } from '../../core/agent/agent.service';
 import { AlertsService } from '../alerts/alerts.service';
 import { GraphService } from '../../core/graph/graph.service';

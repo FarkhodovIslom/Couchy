@@ -89,33 +89,95 @@ export class GraphService implements OnModuleInit, OnModuleDestroy {
 
   private seedData() {
     const seedNodes: GraphNode[] = [
-      // Команда
-      { id: 'Jasur_Senior',   label: 'Jasur (Senior)',       type: 'person', metadata: { description: 'Старший разработчик авторизации.' } },
-      { id: 'Kamola_TechLead', label: 'Камола (Tech Lead)',   type: 'person', metadata: { description: 'Техлид команды.' } },
-      { id: 'Alibek_Junior',   label: 'Алибек (Junior)',       type: 'person', metadata: { description: 'Младший разработчик.' } },
+      // ── Команда ─────────────────────────────────────────────────────────────
+      { id: 'Jasur_Senior',    label: 'Jasur (Senior BE)',      type: 'person',   metadata: { role: 'Senior Backend', description: 'Владелец AuthService и ApiGateway. Ведёт code-review по безопасности.' } },
+      { id: 'Kamola_TechLead', label: 'Камола (Tech Lead)',     type: 'person',   metadata: { role: 'Tech Lead',      description: 'Техлид. Принимает архитектурные решения, владелец UserService и OrderService.' } },
+      { id: 'Alibek_Junior',   label: 'Алибек (Junior BE)',     type: 'person',   metadata: { role: 'Junior Backend', description: 'Новый разработчик. Сейчас онбординг. Задача: ТЗ-089 Rate Limiting.' } },
+      { id: 'Dilnoza_QA',      label: 'Дилноза (QA)',           type: 'person',   metadata: { role: 'QA Engineer',    description: 'QA-инженер. Ведёт E2E-тесты авторизации и платежей.' } },
+      { id: 'Rustam_SA',       label: 'Рустам (SA)',            type: 'person',   metadata: { role: 'Solution Architect', description: 'Архитектор системы. Автор всех ADR. Ведёт ТЗ-102.' } },
 
-      // Сервисы
-      { id: 'AuthService',         label: 'AuthService',         type: 'service',  metadata: { description: 'Микросервис аутентификации. Выдаёт и валидирует JWT.' } },
-      { id: 'UserService',         label: 'UserService',         type: 'service',  metadata: { description: 'Сервис пользователей. Валидирует JWT через AuthService.' } },
-      { id: 'PaymentService',      label: 'PaymentService',      type: 'service',  metadata: { description: 'Сервис платежей. Обрабатывает транзакции.' } },
-      { id: 'NotificationService', label: 'NotificationService', type: 'service',  metadata: { description: 'Сервис уведомлений. Отправляет почту/push.' } },
-      { id: 'ApiGateway',          label: 'ApiGateway',          type: 'service',  metadata: { description: 'Единая точка входа API Gateway.' } },
+      // ── Сервисы ─────────────────────────────────────────────────────────────
+      { id: 'ApiGateway',          label: 'ApiGateway',          type: 'service', metadata: { description: 'Единая точка входа. Маршрутизация, rate-limit на уровне сети, SSL-терминация. Порт 443.', owner: 'Jasur_Senior', stack: 'Nginx + Lua' } },
+      { id: 'AuthService',         label: 'AuthService',         type: 'service', metadata: { description: 'Аутентификация и авторизация. Выдаёт Access JWT (15 мин) и Refresh token (7 дней). Реализует OAuth2 + PKCE.', owner: 'Jasur_Senior', stack: 'NestJS, PostgreSQL, Redis', port: '3001' } },
+      { id: 'UserService',         label: 'UserService',         type: 'service', metadata: { description: 'Профили пользователей, роли, настройки. Все мутации требуют валидного Access JWT. Хранит PII-данные.', owner: 'Kamola_TechLead', stack: 'NestJS, PostgreSQL', port: '3002' } },
+      { id: 'OrderService',        label: 'OrderService',        type: 'service', metadata: { description: 'Управление заказами. Принимает заказы, меняет статусы, генерирует события через EventBus.', owner: 'Kamola_TechLead', stack: 'NestJS, PostgreSQL, RabbitMQ', port: '3003' } },
+      { id: 'PaymentService',      label: 'PaymentService',      type: 'service', metadata: { description: 'Обработка платежей. Интеграция со Stripe и Payme. Асинхронное подтверждение через webhook.', owner: 'Jasur_Senior', stack: 'NestJS, PostgreSQL, Stripe SDK', port: '3004' } },
+      { id: 'NotificationService', label: 'NotificationService', type: 'service', metadata: { description: 'Отправка email, SMS, push-уведомлений. Работает через очередь RabbitMQ. Шаблонизатор: Handlebars.', owner: 'Dilnoza_QA', stack: 'NestJS, RabbitMQ, SendGrid', port: '3005' } },
+      { id: 'AnalyticsService',    label: 'AnalyticsService',    type: 'service', metadata: { description: 'Агрегация метрик и событий. ClickHouse как хранилище. Читает события из EventBus.', owner: 'Rustam_SA', stack: 'NestJS, ClickHouse, RabbitMQ', port: '3006' } },
+      { id: 'EventBus',            label: 'EventBus (RabbitMQ)', type: 'service', metadata: { description: 'Шина событий на RabbitMQ. Все async-взаимодействия между сервисами идут через неё. Exchanges: orders.*, payments.*.', owner: 'Rustam_SA', stack: 'RabbitMQ 3.12' } },
 
-      // Документы  
-      { id: 'ТЗ-047_OAuth',     label: 'ТЗ-047: OAuth flow',          type: 'spec', metadata: { description: 'Спецификация интеграции OAuth2.' } },
-      { id: 'ТЗ-089_RateLimit', label: 'ТЗ-089: Rate limiting login', type: 'spec', metadata: { description: 'Спецификация лимитов запросов авторизации.' } },
-      { id: 'ТЗ-091_RefreshBug',label: 'ТЗ-091: Refresh logout bug',  type: 'spec', metadata: { description: 'Спецификация исправления бага инвалидации токенов.' } },
-      { id: 'ADR-001_JWT',      label: 'ADR-001: JWT Architecture',   type: 'spec', metadata: { description: 'Архитектурное решение о выборе stateless JWT.' } },
+      // ── Спецификации (ТЗ) ───────────────────────────────────────────────────
+      { id: 'ТЗ-047_OAuth',      label: 'ТЗ-047: OAuth2 + PKCE',          type: 'spec', metadata: { description: 'Полная спецификация OAuth2 Authorization Code Flow с PKCE. Включает эндпоинты, форматы токенов, обработку ошибок.', status: 'approved', author: 'Rustam_SA' } },
+      { id: 'ТЗ-089_RateLimit',  label: 'ТЗ-089: Rate Limiting /auth',    type: 'spec', metadata: { description: 'Rate limiting на /auth/login: 5 req/min per IP. При превышении — 429 + Retry-After header. Redis как счётчик.', status: 'in_progress', author: 'Alibek_Junior' } },
+      { id: 'ТЗ-091_RefreshBug', label: 'ТЗ-091: Refresh Token Logout Bug', type: 'spec', metadata: { description: 'КРИТИЧЕСКИЙ БАГ (Prod): refresh token не инвалидируется при logout. Пользователь может продолжать сессию после выхода. Fix: удалять из Redis по jti.', status: 'critical', author: 'Jasur_Senior' } },
+      { id: 'ТЗ-102_OrderFlow',  label: 'ТЗ-102: Order Lifecycle',        type: 'spec', metadata: { description: 'Жизненный цикл заказа: created → confirmed → paid → fulfilled → closed. События через EventBus на каждый переход.', status: 'approved', author: 'Rustam_SA' } },
+      { id: 'ТЗ-115_PayRetry',   label: 'ТЗ-115: Payment Retry Logic',    type: 'spec', metadata: { description: 'Логика повторных попыток при сбое оплаты: 3 попытки с экспоненциальным backoff (1м, 5м, 30м). Уведомление пользователю на каждую неудачу.', status: 'draft', author: 'Kamola_TechLead' } },
+
+      // ── Архитектурные решения (ADR) ─────────────────────────────────────────
+      { id: 'ADR-001_JWT',         label: 'ADR-001: JWT vs Sessions',       type: 'decision', metadata: { description: 'Решение: Access JWT (stateless, 15 мин) + Refresh Token (Redis, 7 дней). Причина: горизонтальное масштабирование без shared state.', status: 'accepted', date: '2026-03-10' } },
+      { id: 'ADR-002_EventBus',    label: 'ADR-002: Event-Driven Architecture', type: 'decision', metadata: { description: 'Все async-коммуникации между сервисами — через RabbitMQ. Sync только для read-запросов внутри одного домена. Причина: decoupling + audit trail.', status: 'accepted', date: '2026-04-02' } },
+      { id: 'ADR-003_Monorepo',    label: 'ADR-003: Monorepo (Turborepo)', type: 'decision', metadata: { description: 'Монорепозиторий с Turborepo + Bun. Все сервисы в одном репо для shared-типов и atomic PR. Деплой: Docker Compose → Kubernetes.', status: 'accepted', date: '2026-04-15' } },
+
+      // ── Тикеты ──────────────────────────────────────────────────────────────
+      { id: 'TICKET-089',   label: 'TICKET-089: Rate Limiting',    type: 'ticket', metadata: { description: 'Реализовать rate limiting для /auth/login согласно ТЗ-089. Assignee: Алибек. Sprint 12.', status: 'in_progress', assignee: 'Alibek_Junior' } },
+      { id: 'TICKET-091',   label: 'TICKET-091: Fix Refresh Bug',  type: 'ticket', metadata: { description: 'CRITICAL. Исправить logout: удалять refresh token из Redis по jti при logout. Assignee: Jasur. Hotfix.', status: 'in_review', assignee: 'Jasur_Senior' } },
+      { id: 'TICKET-115',   label: 'TICKET-115: Payment Retry',    type: 'ticket', metadata: { description: 'Добавить retry-логику в PaymentService согласно ТЗ-115. Assignee: Камола. Sprint 13.', status: 'todo', assignee: 'Kamola_TechLead' } },
     ];
 
     const seedEdges = [
-      { source: 'AuthService',    target: 'Jasur_Senior',     relation: 'владеет' },
-      { source: 'AuthService',    target: 'ТЗ-047_OAuth',     relation: 'связан_с' },
-      { source: 'AuthService',    target: 'UserService',      relation: 'влияет_на' },
-      { source: 'AuthService',    target: 'ApiGateway',       relation: 'влияет_на' },
-      { source: 'PaymentService', target: 'UserService',      relation: 'зависит_от' },
-      { source: 'Alibek_Junior',  target: 'AuthService',      relation: 'работает_над' },
-      { source: 'Alibek_Junior',  target: 'ТЗ-089_RateLimit', relation: 'назначен' },
+      // Владение сервисами
+      { source: 'AuthService',         target: 'Jasur_Senior',     relation: 'владелец' },
+      { source: 'UserService',         target: 'Kamola_TechLead',  relation: 'владелец' },
+      { source: 'OrderService',        target: 'Kamola_TechLead',  relation: 'владелец' },
+      { source: 'PaymentService',      target: 'Jasur_Senior',     relation: 'владелец' },
+      { source: 'ApiGateway',          target: 'Jasur_Senior',     relation: 'владелец' },
+      { source: 'AnalyticsService',    target: 'Rustam_SA',        relation: 'владелец' },
+      { source: 'EventBus',            target: 'Rustam_SA',        relation: 'владелец' },
+
+      // Зависимости сервисов
+      { source: 'ApiGateway',          target: 'AuthService',         relation: 'проксирует' },
+      { source: 'ApiGateway',          target: 'UserService',         relation: 'проксирует' },
+      { source: 'ApiGateway',          target: 'OrderService',        relation: 'проксирует' },
+      { source: 'UserService',         target: 'AuthService',         relation: 'зависит_от' },
+      { source: 'OrderService',        target: 'UserService',         relation: 'зависит_от' },
+      { source: 'OrderService',        target: 'EventBus',            relation: 'публикует_в' },
+      { source: 'PaymentService',      target: 'OrderService',        relation: 'зависит_от' },
+      { source: 'PaymentService',      target: 'EventBus',            relation: 'публикует_в' },
+      { source: 'NotificationService', target: 'EventBus',            relation: 'подписан_на' },
+      { source: 'AnalyticsService',    target: 'EventBus',            relation: 'подписан_на' },
+
+      // Спецификации → Сервисы
+      { source: 'ТЗ-047_OAuth',      target: 'AuthService',      relation: 'описывает' },
+      { source: 'ТЗ-089_RateLimit',  target: 'AuthService',      relation: 'описывает' },
+      { source: 'ТЗ-089_RateLimit',  target: 'ApiGateway',       relation: 'затрагивает' },
+      { source: 'ТЗ-091_RefreshBug', target: 'AuthService',      relation: 'описывает_баг' },
+      { source: 'ТЗ-102_OrderFlow',  target: 'OrderService',     relation: 'описывает' },
+      { source: 'ТЗ-102_OrderFlow',  target: 'PaymentService',   relation: 'затрагивает' },
+      { source: 'ТЗ-115_PayRetry',   target: 'PaymentService',   relation: 'описывает' },
+      { source: 'ТЗ-115_PayRetry',   target: 'NotificationService', relation: 'затрагивает' },
+
+      // ADR → Сервисы
+      { source: 'ADR-001_JWT',      target: 'AuthService',    relation: 'обосновывает' },
+      { source: 'ADR-001_JWT',      target: 'UserService',    relation: 'затрагивает' },
+      { source: 'ADR-002_EventBus', target: 'EventBus',       relation: 'обосновывает' },
+      { source: 'ADR-002_EventBus', target: 'OrderService',   relation: 'затрагивает' },
+      { source: 'ADR-003_Monorepo', target: 'ApiGateway',     relation: 'затрагивает' },
+
+      // Тикеты → Люди и Сервисы
+      { source: 'TICKET-089', target: 'Alibek_Junior',  relation: 'назначен' },
+      { source: 'TICKET-089', target: 'AuthService',    relation: 'затрагивает' },
+      { source: 'TICKET-089', target: 'ТЗ-089_RateLimit', relation: 'реализует' },
+      { source: 'TICKET-091', target: 'Jasur_Senior',   relation: 'назначен' },
+      { source: 'TICKET-091', target: 'AuthService',    relation: 'затрагивает' },
+      { source: 'TICKET-091', target: 'ТЗ-091_RefreshBug', relation: 'реализует' },
+      { source: 'TICKET-115', target: 'Kamola_TechLead', relation: 'назначен' },
+      { source: 'TICKET-115', target: 'PaymentService', relation: 'затрагивает' },
+
+      // Люди → текущая работа
+      { source: 'Alibek_Junior',   target: 'AuthService',      relation: 'работает_над' },
+      { source: 'Alibek_Junior',   target: 'ТЗ-089_RateLimit', relation: 'изучает' },
+      { source: 'Dilnoza_QA',      target: 'AuthService',      relation: 'тестирует' },
+      { source: 'Dilnoza_QA',      target: 'OrderService',     relation: 'тестирует' },
     ];
 
     const upsertNode = this.db.prepare(`
