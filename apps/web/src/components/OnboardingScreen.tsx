@@ -190,7 +190,7 @@ export default function OnboardingScreen({ onStart }: Props) {
               width: '100%',
               height: '44px',
               backgroundColor: loading ? 'var(--bg-elevated)' : 'var(--accent)',
-              color: 'var(--text-primary)',
+              color: '#fff',
               fontFamily: 'var(--font-sans)',
               fontSize: 'var(--text-sm)',
               fontWeight: 500,
