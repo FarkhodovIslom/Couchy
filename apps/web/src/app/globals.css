@@ -3,37 +3,37 @@
 @tailwind utilities;
 
 /* ============================================================
-   DESIGN SYSTEM — Couchy / Editorial Dark
-   Терминал встретил дорогой дизайн-журнал.
+   DESIGN SYSTEM — Kibo AI / Editorial Dark
+   Терминал встретил дорогой дизайн-журнал в светлых тонах.
    ============================================================ */
 
 :root {
   /* Backgrounds */
-  --bg-base:       #0A0A0B;
-  --bg-surface:    #111113;
-  --bg-elevated:   #1A1A1E;
+  --bg-base:       #F3F3F6;   /* мягкий чистый журнальный серый, создает глубину */
+  --bg-surface:    #FFFFFF;   /* белоснежные карточки и боковые панели */
+  --bg-elevated:   #EBEBEF;   /* более темный серый для инпутов, кнопок и hover */
 
-  /* Borders */
-  --border:        #232329;
-  --border-subtle: #1C1C21;
+  /* Borders (делаем их четкими и видимыми) */
+  --border:        #C8C8D0;   /* уверенная контрастная граница */
+  --border-subtle: #E2E2E8;   /* мягкая, но заметная граница */
 
-  /* Text */
-  --text-primary:  #F0F0F2;
-  --text-secondary:#8A8A96;
-  --text-tertiary: #4A4A56;
+  /* Text (повышаем контрастность в разы) */
+  --text-primary:  #0A0A0C;   /* глубокий угольно-черный для идеального чтения */
+  --text-secondary:#3C3C43;   /* темный графитовый для второстепенного текста */
+  --text-tertiary: #6E6E7A;   /* уверенный серый для плейсхолдеров и неактивных шагов */
 
-  /* Accent — один, сочный. Появляется ровно в 3 местах. */
-  --accent:        #6C63FF;
-  --accent-dim:    #6C63FF22;
-  --accent-hover:  #7B73FF;
+  /* Accent — премиальный благородный лаймово-зеленый с отличной читаемостью (WCAG AA) */
+  --accent:        #4D7C0F;   /* насыщенный глубокий лайм */
+  --accent-dim:    #4D7C0F1A; /* лайм с прозрачностью */
+  --accent-hover:  #3F6212;   /* темный лайм для наведения */
 
-  /* Semantic */
-  --success:       #22C55E;
-  --warning:       #F59E0B;
-  --danger:        #EF4444;
+  /* Semantic (высококонтрастные) */
+  --success:       #15803D;   /* лесной зеленый */
+  --warning:       #B45309;   /* темно-янтарный */
+  --danger:        #B91C1C;   /* темно-красный */
 
-  /* Gap badge — выбивается из палитры намеренно */
-  --gap-color:     #FF6B35;
+  /* Gap badge специальный */
+  --gap-color:     #C2410C;   /* глубокий сочный оранжевый */
 
   /* Typography scale */
   --text-xs:   11px;
@@ -117,8 +117,8 @@ body {
    ============================================================ */
 
 @keyframes ios-cursor {
-  0%, 100% { opacity: 1; transform: scaleY(1); }
-  50%       { opacity: 0.3; transform: scaleY(0.85); }
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
 }
 
 .streaming-cursor {
@@ -128,7 +128,7 @@ body {
   background: var(--accent);
   margin-left: 2px;
   border-radius: 1px;
-  animation: ios-cursor 900ms var(--ease-ios) infinite;
+  animation: ios-cursor 1s step-end infinite;
   vertical-align: text-bottom;
 }
 
@@ -269,7 +269,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3A3A44;
+  background: #C2C2CD;
 }
 
 /* ============================================================
@@ -279,4 +279,103 @@ body {
 ::selection {
   background: var(--accent-dim);
   color: var(--text-primary);
+}
+
+/* ============================================================
+   MARKDOWN CONTENT
+   ============================================================ */
+
+.markdown-content {
+  line-height: 1.7;
+}
+
+.markdown-content p {
+  margin-bottom: 12px;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  color: var(--text-primary);
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.markdown-content h1 { font-size: 1.3em; }
+.markdown-content h2 { font-size: 1.15em; }
+.markdown-content h3 { font-size: 1.05em; }
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-bottom: 12px;
+  padding-left: 1.5em;
+}
+
+.markdown-content li {
+  margin-bottom: 4px;
+}
+
+.markdown-content code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background-color: var(--bg-elevated);
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+.markdown-content pre {
+  background-color: var(--bg-surface);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: 0.85em;
+}
+
+.markdown-content blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-bottom: 12px;
+}
+
+.markdown-content a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  font-size: var(--text-sm);
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-weight: 500;
 }

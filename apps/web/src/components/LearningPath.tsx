@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { LearningStep } from '@couchy/shared';
-import { toggleStep } from '../lib/api';
+import { LearningStep } from '@kibo/shared';
+import { toggleStep, startSimulation } from '../lib/api';
 
 interface Props {
   sessionId: string;
@@ -19,13 +19,28 @@ const DEMO_QUESTIONS = [
 
 export default function LearningPath({ sessionId, steps, onStepsChange, onAskQuestion }: Props) {
   const [completing, setCompleting] = useState<string | null>(null);
+  const [simulating, setSimulating] = useState(false);
 
-  const completed = steps.filter(s => s.completed).length;
-  const total = steps.length;
+  const handleStartSimulation = async () => {
+    setSimulating(true);
+    try {
+      await startSimulation(sessionId);
+      setTimeout(() => setSimulating(false), 2000);
+    } catch (err) {
+      console.error('Failed to start simulation:', err);
+      alert('Ошибка при запуске симуляции.');
+      setSimulating(false);
+    }
+  };
+
+  const completedCount = steps.filter(s => s.completed).length;
+  const totalCount = steps.length;
+
+  // Active step is defined as the first pending (uncompleted) step in the learning path.
+  const activeStepIndex = steps.findIndex(s => !s.completed);
 
   const handleToggle = useCallback(async (stepId: string, current: boolean) => {
     if (!current) {
-      // Trigger dot animation
       setCompleting(stepId);
       setTimeout(() => setCompleting(null), 420);
     }
@@ -47,7 +62,7 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
       }}
       className="anim-slide-up"
     >
-      {/* Progress header */}
+      {/* Progress header (No large title, just minimal label) */}
       <div
         style={{
           padding: '20px 16px 12px',
@@ -61,7 +76,18 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
             alignItems: 'center',
           }}
         >
-          <span className="label">Progress</span>
+          <span
+            className="label"
+            style={{
+              fontSize: 'var(--text-xs)',
+              color: 'var(--text-tertiary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontWeight: 500,
+            }}
+          >
+            PROGRESS
+          </span>
           <span
             style={{
               fontFamily: 'var(--font-mono)',
@@ -69,15 +95,16 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
               color: 'var(--text-tertiary)',
             }}
           >
-            {completed} / {total}
+            {completedCount} / {totalCount}
           </span>
         </div>
       </div>
 
-      {/* Steps */}
+      {/* Steps List */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
         {steps.map((step, i) => {
           const isCompleted = step.completed;
+          const isActive = i === activeStepIndex;
           const isCompleting = completing === step.id;
 
           let dotChar = '○';
@@ -88,9 +115,11 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
             dotChar = '✓';
             dotColor = 'var(--success)';
             textColor = 'var(--text-tertiary)';
+          } else if (isActive) {
+            dotChar = '●';
+            dotColor = 'var(--accent)';
+            textColor = 'var(--text-primary)';
           }
-          // Note: "active" concept removed per DesignSpec — just completed/pending
-          // The agent prefix "Jarvis" in chat serves as the active indicator
 
           return (
             <div
@@ -141,6 +170,7 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   flex: 1,
+                  fontWeight: isActive ? 500 : 400,
                 }}
                 title={step.title}
               >
@@ -149,6 +179,53 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
             </div>
           );
         })}
+      </div>
+
+      {/* Simulation trigger */}
+      <div
+        style={{
+          borderTop: '1px solid var(--border-subtle)',
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+        }}
+      >
+        <button
+          onClick={handleStartSimulation}
+          disabled={simulating}
+          style={{
+            width: '100%',
+            height: '32px',
+            backgroundColor: simulating ? 'var(--bg-elevated)' : 'var(--accent)',
+            color: simulating ? 'var(--text-secondary)' : '#ffffff',
+            border: simulating ? '1px solid var(--border)' : 'none',
+            borderRadius: '6px',
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'var(--text-xs)',
+            fontWeight: 500,
+            cursor: simulating ? 'not-allowed' : 'pointer',
+            transition: 'all var(--dur-fast) var(--ease-ios), transform var(--dur-fast) var(--ease-spring)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+          }}
+          onMouseEnter={e => {
+            if (!simulating) e.currentTarget.style.backgroundColor = 'var(--accent-hover)';
+          }}
+          onMouseLeave={e => {
+            if (!simulating) e.currentTarget.style.backgroundColor = 'var(--accent)';
+          }}
+          onMouseDown={e => {
+            if (!simulating) e.currentTarget.style.transform = 'scale(0.95)';
+          }}
+          onMouseUp={e => {
+            if (!simulating) e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          ⚡ {simulating ? 'Запуск...' : 'Запустить симуляцию'}
+        </button>
       </div>
 
       {/* Demo questions */}
@@ -161,7 +238,18 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
           gap: '6px',
         }}
       >
-        <span className="label" style={{ marginBottom: '4px' }}>Demo</span>
+        <span
+          className="label"
+          style={{
+            marginBottom: '4px',
+            fontSize: 'var(--text-xs)',
+            color: 'var(--text-tertiary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+          }}
+        >
+          Demo
+        </span>
         {DEMO_QUESTIONS.map((q, i) => (
           <button
             key={i}

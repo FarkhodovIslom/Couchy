@@ -1,0 +1,15 @@
+node_modules
+.next
+dist
+.turbo
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.local
+.env.*.local
+memory/sessions
+memory/daily
+docs/*.md
+bugs/*.json
+templates/*.md

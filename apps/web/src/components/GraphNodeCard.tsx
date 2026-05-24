@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { GraphNode } from '@couchy/shared';
+import { GraphNode } from '@kibo/shared';
 
 interface Props {
   node: GraphNode;
@@ -46,6 +46,7 @@ export default function GraphNodeCard({ node, questionCount = 0 }: Props) {
             fontFamily: 'var(--font-mono)',
             fontSize: 'var(--text-xs)',
             color: TYPE_COLORS[node.type] ?? 'var(--text-secondary)',
+            fontWeight: node.type === 'decision' ? 500 : 400,
           }}
         >
           {node.label}
@@ -60,10 +61,11 @@ export default function GraphNodeCard({ node, questionCount = 0 }: Props) {
             fontFamily: 'var(--font-mono)',
             fontSize: 'var(--text-xs)',
             backgroundColor: 'var(--gap-color)',
-            color: '#fff',
+            color: '#ffffff',
             borderRadius: '4px',
             padding: '1px 6px',
             opacity: isHot ? 1 : 0.7,
+            fontWeight: 500,
             animation: `badge-pop var(--dur-normal) var(--ease-spring) both`,
           }}
         >

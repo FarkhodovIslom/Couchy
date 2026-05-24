@@ -5,7 +5,17 @@ import {
   GraphNode,
   GraphEdge,
   UserRole,
-} from '@couchy/shared';
+  GenerateDocRequest,
+  GeneratedDoc,
+  CodeReviewRequest,
+  CodeReviewReport,
+  BugAnalyzeRequest,
+  BugRiskReport,
+  BugRecordRequest,
+  SADraftRequest,
+  SARefinedRequest,
+  SADocument,
+} from '@kibo/shared';
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
@@ -46,6 +56,14 @@ export async function getLearningPath(sessionId: string): Promise<LearningStep[]
   return data.steps ?? [];
 }
 
+export async function getProgress(
+  sessionId: string,
+): Promise<{ total: number; completed: number; percent: number }> {
+  const res = await fetch(`${API_URL}/onboarding/${sessionId}/progress`);
+  if (!res.ok) return { total: 0, completed: 0, percent: 0 };
+  return res.json();
+}
+
 // ---------------------------------------------------------------------------
 // Alerts
 // ---------------------------------------------------------------------------
@@ -55,6 +73,21 @@ export async function getAlerts(sessionId: string): Promise<ProactiveAlert[]> {
   if (!res.ok) return [];
   const data = await res.json();
   return data.alerts ?? [];
+}
+
+export async function markAlertRead(alertId: string): Promise<void> {
+  await fetch(`${API_URL}/alerts/${alertId}/read`, { method: 'PATCH' });
+}
+
+export async function getAlertReport(sessionId: string): Promise<{
+  totalAlerts: number;
+  unreadAlerts: number;
+  gapNodes: Array<{ nodeId: string; count: number }>;
+  alertsByType: Record<string, number>;
+}> {
+  const res = await fetch(`${API_URL}/alerts/report/${sessionId}`);
+  if (!res.ok) return { totalAlerts: 0, unreadAlerts: 0, gapNodes: [], alertsByType: {} };
+  return res.json();
 }
 
 // ---------------------------------------------------------------------------
@@ -70,14 +103,25 @@ export async function getGraphSnapshot(): Promise<{
   return res.json();
 }
 
+export async function getGraphNode(
+  nodeId: string,
+): Promise<{ node: GraphNode; neighbors: unknown[] } | null> {
+  const res = await fetch(`${API_URL}/graph/node/${encodeURIComponent(nodeId)}`);
+  if (!res.ok) return null;
+  return res.json();
+}
+
 // ---------------------------------------------------------------------------
 // Chat — SSE via fetch + ReadableStream (NOT EventSource — POST not supported)
 // ---------------------------------------------------------------------------
 
 export interface StreamCallbacks {
   onToken: (token: string) => void;
+  onThinking?: (text: string) => void;
   onSources: (nodes: GraphNode[]) => void;
   onAlerts: (alerts: ProactiveAlert[]) => void;
+  onSuggestions?: (suggestions: string[]) => void;
+  onStepComplete?: (stepId: string) => void;
   onDone: () => void;
   onError: (err: Error) => void;
 }
@@ -88,7 +132,7 @@ export async function streamMessage(
   callbacks: StreamCallbacks,
   signal?: AbortSignal,
 ): Promise<void> {
-  const { onToken, onSources, onAlerts, onDone, onError } = callbacks;
+  const { onToken, onThinking, onSources, onAlerts, onSuggestions, onStepComplete, onDone, onError } = callbacks;
 
   let response: Response;
   try {
@@ -135,7 +179,7 @@ export async function streamMessage(
           return;
         }
 
-        let parsed: { type: string; content?: string; nodes?: GraphNode[]; alerts?: ProactiveAlert[] };
+        let parsed: { type: string; content?: string; nodes?: GraphNode[]; alerts?: ProactiveAlert[]; suggestions?: string[]; stepId?: string };
         try {
           parsed = JSON.parse(raw);
         } catch {
@@ -146,11 +190,20 @@ export async function streamMessage(
           case 'token':
             if (parsed.content) onToken(parsed.content);
             break;
+          case 'thinking':
+            if (parsed.content && onThinking) onThinking(parsed.content);
+            break;
           case 'sources':
             if (parsed.nodes) onSources(parsed.nodes);
             break;
           case 'alerts':
             if (parsed.alerts) onAlerts(parsed.alerts);
+            break;
+          case 'step_complete':
+            if (parsed.stepId && onStepComplete) onStepComplete(parsed.stepId);
+            break;
+          case 'suggestions':
+            if (parsed.suggestions && onSuggestions) onSuggestions(parsed.suggestions);
             break;
           case 'done':
             onDone();
@@ -167,4 +220,97 @@ export async function streamMessage(
   } finally {
     reader.releaseLock();
   }
+}
+
+// ---------------------------------------------------------------------------
+// Docs
+// ---------------------------------------------------------------------------
+
+export async function generateDoc(request: GenerateDocRequest): Promise<GeneratedDoc> {
+  const res = await fetch(`${API_URL}/docs/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`generateDoc failed: ${res.status}`);
+  return res.json();
+}
+
+export async function getDoc(featureId: string): Promise<GeneratedDoc | null> {
+  const res = await fetch(`${API_URL}/docs/${encodeURIComponent(featureId)}`);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Review
+// ---------------------------------------------------------------------------
+
+export async function reviewCode(request: CodeReviewRequest): Promise<CodeReviewReport> {
+  const res = await fetch(`${API_URL}/review/check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`reviewCode failed: ${res.status}`);
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Bugs
+// ---------------------------------------------------------------------------
+
+export async function analyzeBug(request: BugAnalyzeRequest): Promise<BugRiskReport> {
+  const res = await fetch(`${API_URL}/bugs/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`analyzeBug failed: ${res.status}`);
+  return res.json();
+}
+
+export async function recordBug(request: BugRecordRequest): Promise<void> {
+  await fetch(`${API_URL}/bugs/record`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// SA Writer
+// ---------------------------------------------------------------------------
+
+export async function draftSA(request: SADraftRequest): Promise<SADocument> {
+  const res = await fetch(`${API_URL}/sa/draft`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`draftSA failed: ${res.status}`);
+  return res.json();
+}
+
+export async function refineSA(request: SARefinedRequest): Promise<SADocument> {
+  const res = await fetch(`${API_URL}/sa/refine`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`refineSA failed: ${res.status}`);
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Simulation
+// ---------------------------------------------------------------------------
+
+export async function startSimulation(sessionId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/simulation/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId }),
+  });
+  if (!res.ok) throw new Error(`startSimulation failed: ${res.status}`);
 }

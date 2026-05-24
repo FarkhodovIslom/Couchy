@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UserRole, LearningStep } from '@couchy/shared';
+import { UserRole, LearningStep } from '@kibo/shared';
 import { startOnboarding } from '../lib/api';
 
 interface Props {
@@ -12,6 +12,8 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'junior_backend',  label: 'Junior Backend' },
   { value: 'junior_frontend', label: 'Junior Frontend' },
   { value: 'qa',              label: 'QA Engineer' },
+  { value: 'lead',            label: 'Tech Lead' },
+  { value: 'sa',              label: 'Solution Architect' },
 ];
 
 export default function OnboardingScreen({ onStart }: Props) {
@@ -22,7 +24,6 @@ export default function OnboardingScreen({ onStart }: Props) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Trigger entrance animations after mount
     const t = setTimeout(() => setMounted(true), 10);
     return () => clearTimeout(t);
   }, []);
@@ -34,13 +35,12 @@ export default function OnboardingScreen({ onStart }: Props) {
     setLoading(true);
     try {
       const data = await startOnboarding(name.trim(), role);
-      // Trigger page exit animation, then switch view
       setExiting(true);
       setTimeout(() => {
         onStart(data.sessionId, data.learningPath, name.trim(), role);
       }, 280);
     } catch {
-      alert('Ошибка подключения к API. Убедитесь что NestJS запущен на порту 3001.');
+      alert('Ошибка подключения к API. Убедитесь, что NestJS запущен на порту 3001.');
       setLoading(false);
     }
   };
@@ -50,7 +50,7 @@ export default function OnboardingScreen({ onStart }: Props) {
       style={{
         minHeight: '100vh',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
         backgroundColor: 'var(--bg-base)',
         padding: '24px',
@@ -64,7 +64,7 @@ export default function OnboardingScreen({ onStart }: Props) {
           display: 'flex',
           flexDirection: 'column',
           gap: '32px',
-          paddingTop: '80px',
+          paddingTop: '120px',
         }}
         className={mounted ? 'anim-page-enter' : ''}
       >
@@ -80,7 +80,7 @@ export default function OnboardingScreen({ onStart }: Props) {
               marginBottom: '8px',
             }}
           >
-            Jarvis
+            Kibo AI
           </h1>
           <p
             style={{
@@ -107,7 +107,7 @@ export default function OnboardingScreen({ onStart }: Props) {
                     '--index': i,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
+                    justifyContent: 'flex-start',
                     padding: '14px 16px',
                     borderRadius: '8px',
                     border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
@@ -115,6 +115,7 @@ export default function OnboardingScreen({ onStart }: Props) {
                     color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
                     fontFamily: 'var(--font-sans)',
                     fontSize: 'var(--text-sm)',
+                    fontWeight: isSelected ? 500 : 400,
                     cursor: 'pointer',
                     textAlign: 'left',
                     transition: `border-color var(--dur-normal) var(--ease-ios),
@@ -137,17 +138,6 @@ export default function OnboardingScreen({ onStart }: Props) {
                     (e.currentTarget as HTMLElement).style.transform = isSelected ? 'scale(1.02)' : 'scale(1)';
                   }}
                 >
-                  {/* Radio dot */}
-                  <span
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: isSelected ? 'var(--accent)' : 'var(--text-tertiary)',
-                      flexShrink: 0,
-                      transition: 'background-color var(--dur-normal) var(--ease-ios)',
-                    }}
-                  />
                   {label}
                 </button>
               );
@@ -159,8 +149,14 @@ export default function OnboardingScreen({ onStart }: Props) {
             <label
               className="label"
               htmlFor="onboarding-name"
+              style={{
+                fontSize: 'var(--text-xs)',
+                color: 'var(--text-tertiary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
             >
-              Имя
+              ИМЯ
             </label>
             <input
               id="onboarding-name"

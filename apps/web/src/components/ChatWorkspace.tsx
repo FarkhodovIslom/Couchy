@@ -1,11 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { LearningStep, ProactiveAlert, GraphNode, UserRole } from '@couchy/shared';
+import { GraphNode, UserRole, LearningStep } from '@kibo/shared';
 import LearningPath from './LearningPath';
-import ChatPane from './ChatPane';
 import MetaPanel from './MetaPanel';
-import { getAlerts, getGraphSnapshot } from '../lib/api';
+import MessageBubble from './MessageBubble';
+import ChatInput from './ChatInput';
+import SuggestedQuestions from './SuggestedQuestions';
+import { getGraphSnapshot } from '../lib/api';
+import { useAlerts } from '../hooks/useAlerts';
+import { useOnboarding } from '../hooks/useOnboarding';
+import { useChat } from '../hooks/useChat';
 
 interface Props {
   sessionId: string;
@@ -14,302 +19,230 @@ interface Props {
   role: UserRole;
 }
 
-export default function ChatWorkspace({ sessionId, steps: initialSteps, userName, role }: Props) {
-  const [steps, setSteps]               = useState<LearningStep[]>(initialSteps);
-  const [alerts, setAlerts]             = useState<ProactiveAlert[]>([]);
-  const [nodes, setNodes]               = useState<GraphNode[]>([]);
+export default function ChatWorkspace({ sessionId, steps: initialSteps, userName }: Props) {
+  const { steps, setSteps, markStepComplete } = useOnboarding(sessionId, initialSteps);
+  const { alerts, addAlerts, markRead } = useAlerts(sessionId);
+
+  const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
-  const [pendingQuestion, setPendingQuestion] = useState<string>('');
-  const chatPaneRef = useRef<{ setInput: (v: string) => void } | null>(null);
+  const [feedEvents, setFeedEvents] = useState<any[]>([]);
+  const [chatInputValue, setChatInputValue] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileMetaOpen, setMobileMetaOpen] = useState(false);
+
+  const handleNodesMentioned = useCallback((nodeIds: string[]) => {
+    setQuestionCounts((prev) => {
+      const next = { ...prev };
+      for (const id of nodeIds) next[id] = (next[id] ?? 0) + 1;
+      return next;
+    });
+    getGraphSnapshot().then((data) => setNodes(data.nodes));
+  }, []);
+
+  const { messages, isStreaming, isThinking, streamContent, streamSources, suggestions, send, stop } = useChat({
+    sessionId,
+    onNewAlerts: addAlerts,
+    onNodesMentioned: handleNodesMentioned,
+    onStepComplete: markStepComplete,
+  });
 
   // Load initial graph snapshot
   useEffect(() => {
-    getGraphSnapshot().then(data => setNodes(data.nodes));
+    getGraphSnapshot().then((data) => setNodes(data.nodes));
   }, [sessionId]);
 
-  // Poll alerts every 10s (light background refresh)
+  // Subscribe to simulation SSE
   useEffect(() => {
-    const fetchAlerts = () => getAlerts(sessionId).then(a => {
-      if (a.length > 0) setAlerts(a);
-    });
-    const interval = setInterval(fetchAlerts, 10_000);
-    return () => clearInterval(interval);
+    const sseUrl = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/simulation/stream`;
+    const es = new EventSource(sseUrl);
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.event === 'reset') {
+          setFeedEvents([]);
+          getGraphSnapshot().then((s) => setNodes(s.nodes));
+        } else {
+          setFeedEvents((prev) => [data, ...prev]);
+          getGraphSnapshot().then((s) => setNodes(s.nodes));
+        }
+      } catch {}
+    };
+    return () => es.close();
   }, [sessionId]);
 
-  // Handle new alerts from stream
-  const handleNewAlerts = useCallback((newAlerts: ProactiveAlert[]) => {
-    setAlerts(prev => {
-      const existingIds = new Set(prev.map(a => a.id));
-      const unique = newAlerts.filter(a => !existingIds.has(a.id));
-      return [...unique, ...prev];
-    });
+  // Mobile resize handling
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) { setMobileSidebarOpen(false); setMobileMetaOpen(false); }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Track question counts for gap badges
-  const handleNodesMentioned = useCallback((nodeIds: string[]) => {
-    setQuestionCounts(prev => {
-      const next = { ...prev };
-      for (const id of nodeIds) {
-        next[id] = (next[id] ?? 0) + 1;
-      }
-      return next;
-    });
-    // Refresh graph to pick up any new gap nodes
-    getGraphSnapshot().then(data => setNodes(data.nodes));
-  }, []);
-
-  // Demo question injection — passed to ChatPane via inputValue prop pattern
-  const [chatInputValue, setChatInputValue] = useState('');
   const handleAskQuestion = (q: string) => {
     setChatInputValue(q);
+    setMobileSidebarOpen(false);
   };
+
+  // Injected input consumed after use
+  const inputValueRef = useRef(chatInputValue);
+  inputValueRef.current = chatInputValue;
+
+  const handleSend = useCallback(async () => {
+    const text = chatInputValue.trim();
+    if (!text) return;
+    setChatInputValue('');
+    await send(text);
+  }, [chatInputValue, send]);
+
+  const handleSuggestionSelect = useCallback(async (question: string) => {
+    setChatInputValue('');
+    await send(question);
+  }, [send]);
 
   return (
     <div
       style={{
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         height: '100vh',
         overflow: 'hidden',
         backgroundColor: 'var(--bg-base)',
       }}
+      className="anim-page-enter"
     >
-      {/* Left sidebar */}
-      <LearningPath
-        sessionId={sessionId}
-        steps={steps}
-        onStepsChange={setSteps}
-        onAskQuestion={handleAskQuestion}
-      />
+      {/* Mobile header */}
+      {isMobile && (
+        <header
+          style={{
+            height: '48px',
+            backgroundColor: 'var(--bg-surface)',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 16px',
+            flexShrink: 0,
+            zIndex: 100,
+          }}
+        >
+          <button
+            onClick={() => { setMobileSidebarOpen(true); setMobileMetaOpen(false); }}
+            style={{ background: 'none', border: 'none', fontFamily: 'var(--font-sans)', fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 500 }}
+          >
+            Steps ({steps.filter((s) => s.completed).length}/{steps.length})
+          </button>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)', color: 'var(--text-primary)', fontWeight: 500 }}>
+            Kibo
+          </span>
+          <button
+            onClick={() => { setMobileMetaOpen(true); setMobileSidebarOpen(false); }}
+            style={{ background: 'none', border: 'none', fontFamily: 'var(--font-sans)', fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 500 }}
+          >
+            Alerts ({alerts.filter((a) => !a.read).length || alerts.length})
+          </button>
+        </header>
+      )}
 
-      {/* Chat pane — takes injected input value via controlled prop */}
-      <ChatPaneWrapper
-        sessionId={sessionId}
-        userName={userName}
-        onNewAlerts={handleNewAlerts}
-        onNodesMentioned={handleNodesMentioned}
-        injectedInput={chatInputValue}
-        onInjectedInputConsumed={() => setChatInputValue('')}
-      />
+      {/* Backdrop */}
+      {isMobile && (mobileSidebarOpen || mobileMetaOpen) && (
+        <div
+          onClick={() => { setMobileSidebarOpen(false); setMobileMetaOpen(false); }}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.2)', zIndex: 200, animation: 'ios-in var(--dur-fast) var(--ease-ios) both' }}
+        />
+      )}
+
+      {/* Left sidebar */}
+      {!isMobile ? (
+        <LearningPath sessionId={sessionId} steps={steps} onStepsChange={setSteps} onAskQuestion={handleAskQuestion} />
+      ) : mobileSidebarOpen && (
+        <div style={{ position: 'fixed', left: 0, top: 0, bottom: 0, width: '260px', zIndex: 300, backgroundColor: 'var(--bg-surface)', boxShadow: '4px 0 24px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', animation: 'ios-slide-up var(--dur-normal) var(--ease-spring) both' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 16px 0' }}>
+            <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', cursor: 'pointer' }}>✕ CLOSE</button>
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <LearningPath sessionId={sessionId} steps={steps} onStepsChange={setSteps} onAskQuestion={handleAskQuestion} />
+          </div>
+        </div>
+      )}
+
+      {/* Chat center */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: 'var(--bg-base)' }}>
+        <ChatMessages
+          messages={messages}
+          isStreaming={isStreaming}
+          isThinking={isThinking}
+          streamContent={streamContent}
+          streamSources={streamSources}
+          suggestions={suggestions}
+          onSuggestionSelect={handleSuggestionSelect}
+        />
+        <ChatInput
+          value={chatInputValue}
+          onChange={setChatInputValue}
+          onSubmit={handleSend}
+          onStop={stop}
+          isStreaming={isStreaming}
+        />
+      </main>
 
       {/* Right meta panel */}
-      <MetaPanel
-        alerts={alerts}
-        nodes={nodes}
-        questionCounts={questionCounts}
-      />
+      {!isMobile ? (
+        <MetaPanel alerts={alerts} nodes={nodes} questionCounts={questionCounts} feedEvents={feedEvents} onMarkRead={markRead} />
+      ) : mobileMetaOpen && (
+        <div style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '290px', zIndex: 300, backgroundColor: 'var(--bg-surface)', boxShadow: '-4px 0 24px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', animation: 'ios-slide-up var(--dur-normal) var(--ease-spring) both' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '12px 16px 0' }}>
+            <button onClick={() => setMobileMetaOpen(false)} style={{ background: 'none', border: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', cursor: 'pointer' }}>✕ CLOSE</button>
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <MetaPanel alerts={alerts} nodes={nodes} questionCounts={questionCounts} feedEvents={feedEvents} onMarkRead={markRead} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// Thin wrapper to handle injected input from demo buttons
-interface WrapperProps {
-  sessionId: string;
-  userName: string;
-  onNewAlerts: (a: ProactiveAlert[]) => void;
-  onNodesMentioned: (ids: string[]) => void;
-  injectedInput: string;
-  onInjectedInputConsumed: () => void;
+// Extracted chat message list component
+interface ChatMessagesProps {
+  messages: any[];
+  isStreaming: boolean;
+  isThinking: boolean;
+  streamContent: string;
+  streamSources: GraphNode[];
+  suggestions: string[];
+  onSuggestionSelect: (question: string) => void;
 }
 
-function ChatPaneWrapper({
-  sessionId,
-  userName,
-  onNewAlerts,
-  onNodesMentioned,
-  injectedInput,
-  onInjectedInputConsumed,
-}: WrapperProps) {
-  const [value, setValue] = useState('');
-
-  useEffect(() => {
-    if (injectedInput) {
-      setValue(injectedInput);
-      onInjectedInputConsumed();
-    }
-  }, [injectedInput, onInjectedInputConsumed]);
-
-  return (
-    <ChatPaneControlled
-      sessionId={sessionId}
-      userName={userName}
-      onNewAlerts={onNewAlerts}
-      onNodesMentioned={onNodesMentioned}
-      externalValue={value}
-      onExternalValueChange={setValue}
-    />
-  );
-}
-
-// ChatPane variant that accepts external input value control
-interface ControlledProps {
-  sessionId: string;
-  userName: string;
-  onNewAlerts: (a: ProactiveAlert[]) => void;
-  onNodesMentioned: (ids: string[]) => void;
-  externalValue: string;
-  onExternalValueChange: (v: string) => void;
-}
-
-import { streamMessage } from '../lib/api';
-import MessageBubble from './MessageBubble';
-import ChatInput from './ChatInput';
-import { ChatMessage } from '@couchy/shared';
-
-function ChatPaneControlled({
-  sessionId,
-  onNewAlerts,
-  onNodesMentioned,
-  externalValue,
-  onExternalValueChange,
-}: ControlledProps) {
-  const [messages, setMessages]           = useState<ChatMessage[]>([]);
-  const [isStreaming, setIsStreaming]     = useState(false);
-  const [streamContent, setStreamContent] = useState('');
-  const [streamSources, setStreamSources] = useState<GraphNode[]>([]);
-  const abortRef  = useRef<AbortController | null>(null);
+function ChatMessages({ messages, isStreaming, isThinking, streamContent, streamSources, suggestions, onSuggestionSelect }: ChatMessagesProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamContent]);
-
-  const handleSend = useCallback(async () => {
-    const text = externalValue.trim();
-    if (!text || isStreaming) return;
-
-    onExternalValueChange('');
-
-    const userMsg: ChatMessage = {
-      id: `u_${Date.now()}`,
-      role: 'user',
-      content: text,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages(prev => [...prev, userMsg]);
-    setIsStreaming(true);
-    setStreamContent('');
-    setStreamSources([]);
-
-    const abort = new AbortController();
-    abortRef.current = abort;
-
-    let fullContent = '';
-    let finalSources: GraphNode[] = [];
-
-    await streamMessage(
-      sessionId,
-      text,
-      {
-        onToken: t => { fullContent += t; setStreamContent(fullContent); },
-        onSources: nodes => { finalSources = nodes; setStreamSources(nodes); onNodesMentioned(nodes.map(n => n.id)); },
-        onAlerts: a => onNewAlerts(a),
-        onDone: () => {
-          setMessages(prev => [...prev, {
-            id: `a_${Date.now()}`,
-            role: 'assistant',
-            content: fullContent || '—',
-            sources: finalSources,
-            createdAt: new Date().toISOString(),
-          }]);
-          setStreamContent('');
-          setStreamSources([]);
-          setIsStreaming(false);
-        },
-        onError: err => {
-          setMessages(prev => [...prev, {
-            id: `err_${Date.now()}`,
-            role: 'assistant',
-            content: `Ошибка: ${err.message}`,
-            createdAt: new Date().toISOString(),
-          }]);
-          setStreamContent('');
-          setIsStreaming(false);
-        },
-      },
-      abort.signal,
-    );
-  }, [externalValue, isStreaming, sessionId, onNewAlerts, onNodesMentioned, onExternalValueChange]);
-
-  const handleStop = useCallback(() => {
-    abortRef.current?.abort();
-    if (streamContent) {
-      setMessages(prev => [...prev, {
-        id: `a_${Date.now()}`,
-        role: 'assistant',
-        content: streamContent + ' [остановлено]',
-        createdAt: new Date().toISOString(),
-      }]);
-    }
-    setStreamContent('');
-    setStreamSources([]);
-    setIsStreaming(false);
-  }, [streamContent]);
+  }, [messages, streamContent, suggestions]);
 
   return (
-    <main
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        backgroundColor: 'var(--bg-base)',
-      }}
-    >
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '24px 28px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '20px',
-        }}
-      >
-        {messages.length === 0 && !isStreaming && (
-          <div
-            style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: 'var(--text-sm)',
-              color: 'var(--text-tertiary)',
-              textAlign: 'center',
-              marginTop: '48px',
-            }}
-            className="anim-ios-in"
-          >
-            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)', marginRight: '8px' }}>
-              Jarvis
-            </span>
-            готов. Задай первый вопрос.
-          </div>
-        )}
-
-        {messages.map(msg => (
-          <MessageBubble
-            key={msg.id}
-            role={msg.role as 'user' | 'assistant'}
-            content={msg.content}
-            sources={msg.sources as GraphNode[] | undefined}
-          />
-        ))}
-
-        {isStreaming && (
-          <MessageBubble
-            role="assistant"
-            content={streamContent}
-            isStreaming
-          />
-        )}
-
-        <div ref={bottomRef} />
-      </div>
-
-      <ChatInput
-        value={externalValue}
-        onChange={onExternalValueChange}
-        onSubmit={handleSend}
-        onStop={handleStop}
-        isStreaming={isStreaming}
-      />
-    </main>
+    <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {messages.length === 0 && !isStreaming && (
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '48px' }} className="anim-ios-in">
+          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)', marginRight: '8px' }}>Kibo</span>
+          готов. Задай первый вопрос.
+        </div>
+      )}
+      {messages.map((msg) => (
+        <MessageBubble key={msg.id} role={msg.role} content={msg.content} sources={msg.sources} />
+      ))}
+      {isStreaming && (
+        <MessageBubble role="assistant" content={streamContent} sources={streamSources} isStreaming isThinking={isThinking && !streamContent} />
+      )}
+      {!isStreaming && suggestions.length > 0 && (
+        <SuggestedQuestions suggestions={suggestions} onSelect={onSuggestionSelect} />
+      )}
+      <div ref={bottomRef} />
+    </div>
   );
 }

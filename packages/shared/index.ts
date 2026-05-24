@@ -3,3 +3,7 @@ export * from './types/onboarding';
 export * from './types/message';
 export * from './types/alert';
 export * from './types/graph';
+export * from './types/docs';
+export * from './types/review';
+export * from './types/bugs';
+export * from './types/sa';

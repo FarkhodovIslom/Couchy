@@ -4,9 +4,11 @@ export interface LearningStep {
   description: string;
   relatedNodes: string[];
   completed: boolean;
+  completedAt?: string;
 }
 
 export interface OnboardingStartResponse {
   sessionId: string;
   learningPath: LearningStep[];
+  welcomeMessage?: string;
 }

@@ -1,0 +1,54 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GRAPH_DB_PATH=/data/graph.db
+      - PORT=3001
+    volumes:
+      - api_memory:/app/apps/api/memory
+      - api_docs:/app/apps/api/docs
+      - api_bugs:/app/apps/api/bugs
+      - api_templates:/app/apps/api/templates
+      - api_graph:/data
+    restart: unless-stopped
+    networks:
+      - kibo
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      - NEXT_PUBLIC_API_URL=/api
+    restart: unless-stopped
+    networks:
+      - kibo
+    depends_on:
+      - api
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    networks:
+      - kibo
+    depends_on:
+      - api
+      - web
+
+volumes:
+  api_memory:
+  api_docs:
+  api_bugs:
+  api_templates:
+  api_graph:
+
+networks:
+  kibo:
+    driver: bridge

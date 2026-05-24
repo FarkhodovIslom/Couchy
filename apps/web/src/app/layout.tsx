@@ -17,7 +17,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Couchy — AI-ассистент для командного онбординга',
+  title: 'Kibo AI — AI-ассистент для командного онбординга',
   description:
     'Живая память команды с агентной логикой. Сократите онбординг разработчиков с 2 недель до 3 дней.',
   keywords: ['AI', 'onboarding', 'developer', 'knowledge graph', 'NestJS', 'Next.js'],

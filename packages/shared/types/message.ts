@@ -5,5 +5,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   sources?: GraphNode[];
+  suggestions?: string[];
+  thinking?: boolean;
   createdAt: string;
 }

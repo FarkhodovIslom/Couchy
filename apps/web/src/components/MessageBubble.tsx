@@ -1,13 +1,17 @@
 'use client';
 
 import React from 'react';
-import { GraphNode } from '@couchy/shared';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { GraphNode } from '@kibo/shared';
+import TypingIndicator from './TypingIndicator';
 
 interface Props {
   role: 'user' | 'assistant';
   content: string;
   sources?: GraphNode[];
   isStreaming?: boolean;
+  isThinking?: boolean;
 }
 
 const SOURCE_TYPE_COLOR: Record<string, string> = {
@@ -17,7 +21,7 @@ const SOURCE_TYPE_COLOR: Record<string, string> = {
   service:  'var(--text-secondary)',
 };
 
-export default function MessageBubble({ role, content, sources, isStreaming }: Props) {
+export default function MessageBubble({ role, content, sources, isStreaming, isThinking }: Props) {
   const isUser = role === 'user';
 
   if (isUser) {
@@ -33,43 +37,54 @@ export default function MessageBubble({ role, content, sources, isStreaming }: P
             fontFamily: 'var(--font-sans)',
             fontSize: 'var(--text-base)',
             lineHeight: 1.6,
-            whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
+          className="markdown-content"
         >
-          {content}
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         </div>
       </div>
     );
   }
 
-  // Agent message — no bubble, prefix + text
+  // Agent message — no bubble, flat text, prefix + text
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }} className="anim-ios-in">
-      {/* Message text with Jarvis prefix */}
       <div
         style={{
           fontFamily: 'var(--font-sans)',
           fontSize: 'var(--text-base)',
           color: 'var(--text-primary)',
           lineHeight: 1.7,
-          whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
           maxWidth: '80%',
         }}
       >
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--text-sm)',
-            color: 'var(--accent)',
-            marginRight: '8px',
-          }}
-        >
-          Jarvis
-        </span>
-        {content}
-        {isStreaming && <span className="streaming-cursor" />}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-sm)',
+              color: 'var(--accent)',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              marginTop: '2px',
+              fontWeight: 500,
+            }}
+          >
+            Kibo
+          </span>
+          <div className="markdown-content" style={{ flex: 1 }}>
+            {isThinking && !content ? (
+              <TypingIndicator />
+            ) : (
+              <>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                {isStreaming && !isThinking && <span className="streaming-cursor" />}
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Sources — appear after done */}
@@ -80,17 +95,16 @@ export default function MessageBubble({ role, content, sources, isStreaming }: P
             flexDirection: 'column',
             gap: '8px',
             animationDelay: '100ms',
+            marginTop: '8px',
           }}
           className="anim-slide-up"
         >
-          {/* Horizontal rule */}
+          {/* Horizontal rule with label and Lime count badge */}
           <div
             style={{
-              borderTop: '1px solid var(--border)',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              paddingTop: '8px',
             }}
           >
             <span
@@ -106,7 +120,6 @@ export default function MessageBubble({ role, content, sources, isStreaming }: P
               sources
             </span>
             <div style={{ flex: 1, borderTop: '1px solid var(--border)' }} />
-            {/* Accent badge — count of sources (3rd accent usage) */}
             <span
               style={{
                 fontFamily: 'var(--font-mono)',
@@ -116,6 +129,7 @@ export default function MessageBubble({ role, content, sources, isStreaming }: P
                 border: '1px solid var(--accent)',
                 borderRadius: '4px',
                 padding: '1px 6px',
+                fontWeight: 500,
               }}
             >
               {sources.length}

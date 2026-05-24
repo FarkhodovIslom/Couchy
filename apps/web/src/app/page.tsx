@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { LearningStep, UserRole } from '@couchy/shared';
+import { LearningStep, UserRole } from '@kibo/shared';
 import OnboardingScreen from '../components/OnboardingScreen';
 import ChatWorkspace from '../components/ChatWorkspace';
 

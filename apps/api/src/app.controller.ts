@@ -9,13 +9,13 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Response } from 'express-serve-static-core';
 
-import { AgentService } from './agent/agent.service';
-import { OnboardingService } from './onboarding/onboarding.service';
-import { AlertsService } from './alerts/alerts.service';
-import { GraphService } from './graph/graph.service';
-import { UserRole } from '@couchy/shared';
+import { AgentService } from './core/agent/agent.service';
+import { OnboardingService } from './modules/onboarding/onboarding.service';
+import { AlertsService } from './modules/alerts/alerts.service';
+import { GraphService } from './core/graph/graph.service';
+import type { UserRole } from '@kibo/shared';
 
 @Controller()
 export class AppController {

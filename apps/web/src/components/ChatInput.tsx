@@ -62,8 +62,13 @@ export default function ChatInput({ value, onChange, onSubmit, onStop, isStreami
           transition: 'border-color var(--dur-fast) var(--ease-ios)',
           opacity: disabled ? 0.5 : 1,
         }}
-        onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
-        onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+        onFocus={e => {
+          e.currentTarget.style.borderColor = 'var(--accent)';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+        onBlur={e => {
+          e.currentTarget.style.borderColor = 'var(--border)';
+        }}
       />
 
       {/* Send / Stop button */}
