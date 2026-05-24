@@ -3,7 +3,6 @@
 > **Build with AI EdTech Hackathon 2026** · Track: Corporate Education
 > New Uzbekistan University · May 23–24 · Deadline: 14:30 May 24
 
-[Russian Version](#-о-проекте) | [English Version](#-about-the-project) | [Architecture & Features](#-technical-architecture)
 
 ---
 
