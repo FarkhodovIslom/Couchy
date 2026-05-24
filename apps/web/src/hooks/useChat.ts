@@ -1,6 +1,4 @@
-'use client';
-
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChatMessage, GraphNode, ProactiveAlert } from '@kibo/shared';
 import { streamMessage } from '../lib/api';
 
@@ -20,6 +18,21 @@ export function useChat({ sessionId, onNewAlerts, onNodesMentioned, onStepComple
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Load chat history from localStorage on mount or when sessionId changes
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`chat_history_${sessionId}`);
+      if (stored) {
+        setMessages(JSON.parse(stored));
+      } else {
+        setMessages([]);
+      }
+    } catch (e) {
+      console.error('Failed to load chat history from localStorage:', e);
+      setMessages([]);
+    }
+  }, [sessionId]);
+
   const send = useCallback(
     async (text: string) => {
       if (!text.trim() || isStreaming) return;
@@ -30,7 +43,17 @@ export function useChat({ sessionId, onNewAlerts, onNodesMentioned, onStepComple
         content: text,
         createdAt: new Date().toISOString(),
       };
-      setMessages((prev) => [...prev, userMsg]);
+      
+      setMessages((prev) => {
+        const next = [...prev, userMsg];
+        try {
+          localStorage.setItem(`chat_history_${sessionId}`, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to save chat history to localStorage:', e);
+        }
+        return next;
+      });
+
       setIsStreaming(true);
       setIsThinking(false);
       setStreamContent('');
@@ -64,31 +87,47 @@ export function useChat({ sessionId, onNewAlerts, onNodesMentioned, onStepComple
           onSuggestions: (s) => setSuggestions(s),
           onStepComplete: (stepId) => onStepComplete?.(stepId),
           onDone: () => {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `a_${Date.now()}`,
-                role: 'assistant',
-                content: fullContent || '—',
-                sources: finalSources,
-                createdAt: new Date().toISOString(),
-              },
-            ]);
+            setMessages((prev) => {
+              const next = [
+                ...prev,
+                {
+                  id: `a_${Date.now()}`,
+                  role: 'assistant' as const,
+                  content: fullContent || '—',
+                  sources: finalSources,
+                  createdAt: new Date().toISOString(),
+                },
+              ];
+              try {
+                localStorage.setItem(`chat_history_${sessionId}`, JSON.stringify(next));
+              } catch (e) {
+                console.error('Failed to save chat history to localStorage:', e);
+              }
+              return next;
+            });
             setStreamContent('');
             setStreamSources([]);
             setIsStreaming(false);
             setIsThinking(false);
           },
           onError: (err) => {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `err_${Date.now()}`,
-                role: 'assistant',
-                content: `Ошибка: ${err.message}`,
-                createdAt: new Date().toISOString(),
-              },
-            ]);
+            setMessages((prev) => {
+              const next = [
+                ...prev,
+                {
+                  id: `err_${Date.now()}`,
+                  role: 'assistant' as const,
+                  content: `Ошибка: ${err.message}`,
+                  createdAt: new Date().toISOString(),
+                },
+              ];
+              try {
+                localStorage.setItem(`chat_history_${sessionId}`, JSON.stringify(next));
+              } catch (e) {
+                console.error('Failed to save chat history to localStorage:', e);
+              }
+              return next;
+            });
             setStreamContent('');
             setIsStreaming(false);
             setIsThinking(false);
@@ -103,21 +142,29 @@ export function useChat({ sessionId, onNewAlerts, onNodesMentioned, onStepComple
   const stop = useCallback(() => {
     abortRef.current?.abort();
     if (streamContent) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `a_${Date.now()}`,
-          role: 'assistant',
-          content: streamContent + ' [остановлено]',
-          createdAt: new Date().toISOString(),
-        },
-      ]);
+      setMessages((prev) => {
+        const next = [
+          ...prev,
+          {
+            id: `a_${Date.now()}`,
+            role: 'assistant' as const,
+            content: streamContent + ' [остановлено]',
+            createdAt: new Date().toISOString(),
+          },
+        ];
+        try {
+          localStorage.setItem(`chat_history_${sessionId}`, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to save chat history to localStorage:', e);
+        }
+        return next;
+      });
     }
     setStreamContent('');
     setStreamSources([]);
     setIsStreaming(false);
     setIsThinking(false);
-  }, [streamContent]);
+  }, [streamContent, sessionId]);
 
   return {
     messages,
@@ -130,3 +177,4 @@ export function useChat({ sessionId, onNewAlerts, onNodesMentioned, onStepComple
     stop,
   };
 }
+

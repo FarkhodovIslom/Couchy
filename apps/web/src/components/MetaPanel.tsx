@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ProactiveAlert, GraphNode } from '@kibo/shared';
+import { Package, Ticket, MessageCircle, ArrowUpRight } from 'lucide-react';
 import AlertCard from './AlertCard';
 import GraphNodeCard from './GraphNodeCard';
 
@@ -223,9 +224,9 @@ export default function MetaPanel({ alerts, nodes, questionCounts, feedEvents, o
                         textTransform: 'uppercase',
                       }}
                     >
-                      {item.event === 'commit' && '📦 commit'}
-                      {item.event === 'ticket' && '🎫 ticket'}
-                      {item.event === 'pr_comment' && '💬 pr comment'}
+                      {item.event === 'commit' && <><Package size={12} style={{ display: 'inline', verticalAlign: '-2px' }} /> commit</>}
+                      {item.event === 'ticket' && <><Ticket size={12} style={{ display: 'inline', verticalAlign: '-2px' }} /> ticket</>}
+                      {item.event === 'pr_comment' && <><MessageCircle size={12} style={{ display: 'inline', verticalAlign: '-2px' }} /> pr comment</>}
                     </span>
                     <span
                       style={{
@@ -331,7 +332,7 @@ export default function MetaPanel({ alerts, nodes, questionCounts, feedEvents, o
             onMouseEnter={(e) => { (e.currentTarget).style.opacity = '0.7'; }}
             onMouseLeave={(e) => { (e.currentTarget).style.opacity = '1'; }}
           >
-            Open full graph →
+            Open full graph <ArrowUpRight size={10} style={{ display: 'inline', verticalAlign: '-1px' }} />
           </a>
         </div>
 

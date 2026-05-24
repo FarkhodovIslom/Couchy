@@ -37,21 +37,21 @@ interface SimEdge {
 /* -------------------------------------------------------------------------- */
 
 const NODE_COLORS: Record<string, string> = {
-  service:  '#60A5FA',  // soft blue
-  spec:     '#86EFAC',  // soft green
-  gap:      '#FB923C',  // warm orange
-  decision: '#C084FC',  // soft purple
-  person:   '#F472B6',  // pink
-  ticket:   '#FCD34D',  // gold
+  service:  '#3B82F6',
+  spec:     '#4D7C0F',
+  gap:      '#DC2626',
+  decision: '#7C3AED',
+  person:   '#DB2777',
+  ticket:   '#D97706',
 };
 
 const NODE_GLOW: Record<string, string> = {
-  service:  'rgba(96,165,250,0.6)',
-  spec:     'rgba(134,239,172,0.5)',
-  gap:      'rgba(251,146,60,0.5)',
-  decision: 'rgba(192,132,252,0.5)',
-  person:   'rgba(244,114,182,0.5)',
-  ticket:   'rgba(252,211,77,0.5)',
+  service:  'rgba(59,130,246,0.25)',
+  spec:     'rgba(77,124,15,0.22)',
+  gap:      'rgba(220,38,38,0.22)',
+  decision: 'rgba(124,58,237,0.22)',
+  person:   'rgba(219,39,119,0.22)',
+  ticket:   'rgba(217,119,6,0.22)',
 };
 
 const NODE_LABELS: Record<string, string> = {
@@ -61,9 +61,9 @@ const NODE_LABELS: Record<string, string> = {
 
 const LEGEND_TYPES = Object.keys(NODE_COLORS);
 
-const BG_COLOR = '#0B0D13';
-const LINE_COLOR = 'rgba(100,120,160,0.15)';
-const LINE_HOVER = 'rgba(100,120,160,0.55)';
+const BG_COLOR = '#F7F8FA';
+const LINE_COLOR = 'rgba(0,0,0,0.06)';
+const LINE_HOVER = 'rgba(0,0,0,0.25)';
 
 function nodeRadius(node: GraphNode): number {
   if (!node.weight) return 6;
@@ -93,10 +93,10 @@ function createParticles(w: number, h: number, count: number): Particle[] {
     particles.push({
       x: Math.random() * w,
       y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      r: Math.random() * 1.2 + 0.4,
-      opacity: Math.random() * 0.3 + 0.08,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.15,
+      r: Math.random() * 1.0 + 0.3,
+      opacity: Math.random() * 0.12 + 0.03,
     });
   }
   return particles;
@@ -129,7 +129,7 @@ export default function KnowledgeGraph({ nodes, edges, highlightedNodeIds, onNod
           backgroundColor: BG_COLOR,
           fontFamily: 'var(--font-mono)',
           fontSize: 'var(--text-sm)',
-          color: 'rgba(255,255,255,0.3)',
+          color: 'var(--text-tertiary)',
           letterSpacing: '0.06em',
         }}
       >
@@ -155,8 +155,9 @@ export default function KnowledgeGraph({ nodes, edges, highlightedNodeIds, onNod
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctxOrNull = canvas.getContext('2d');
+    if (!ctxOrNull) return;
+    const ctx = ctxOrNull;
     ctx.scale(dpr, dpr);
 
     // Stop previous
@@ -213,7 +214,7 @@ export default function KnowledgeGraph({ nodes, edges, highlightedNodeIds, onNod
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(120,140,180,${p.opacity})`;
+        ctx.fillStyle = `rgba(160,170,190,${p.opacity})`;
         ctx.fill();
       }
 
@@ -245,11 +246,11 @@ export default function KnowledgeGraph({ nodes, edges, highlightedNodeIds, onNod
         const isConnected = hovered && (srcId === hovered || tgtId === hovered);
 
         ctx.beginPath();
-        ctx.moveTo(src.x, src.y);
-        ctx.lineTo(tgt.x, tgt.y);
+        ctx.moveTo(src.x ?? 0, src.y ?? 0);
+        ctx.lineTo(tgt.x ?? 0, tgt.y ?? 0);
 
         if (hovered) {
-          ctx.strokeStyle = isConnected ? LINE_HOVER : 'rgba(50,60,80,0.06)';
+          ctx.strokeStyle = isConnected ? LINE_HOVER : 'rgba(0,0,0,0.02)';
           ctx.lineWidth = isConnected ? 1.5 : 0.5;
         } else {
           ctx.strokeStyle = LINE_COLOR;
@@ -259,10 +260,10 @@ export default function KnowledgeGraph({ nodes, edges, highlightedNodeIds, onNod
 
         // Edge label (only on hover)
         if (isConnected && e.relation) {
-          const mx = (src.x + tgt.x) / 2;
-          const my = (src.y + tgt.y) / 2;
+          const mx = ((src.x ?? 0) + (tgt.x ?? 0)) / 2;
+          const my = ((src.y ?? 0) + (tgt.y ?? 0)) / 2;
           ctx.font = `${9 / transform.k}px var(--font-sans)`;
-          ctx.fillStyle = 'rgba(180,190,210,0.7)';
+          ctx.fillStyle = 'rgba(80,90,110,0.6)';
           ctx.textAlign = 'center';
           ctx.fillText(e.relation, mx, my - 4);
         }
@@ -295,10 +296,11 @@ export default function KnowledgeGraph({ nodes, edges, highlightedNodeIds, onNod
         // Core circle
         ctx.beginPath();
         ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = dimmed ? 'rgba(60,70,90,0.3)' : color;
+        ctx.fillStyle = dimmed ? 'rgba(180,185,200,0.25)' : color;
         ctx.fill();
 
-        if (isHov) {
+        // White border for contrast
+        if (!dimmed) {
           ctx.strokeStyle = '#fff';
           ctx.lineWidth = 1.5;
           ctx.stroke();
@@ -308,7 +310,7 @@ export default function KnowledgeGraph({ nodes, edges, highlightedNodeIds, onNod
         if (isHov || isConnected || isHighlighted || transform.k > 1.5) {
           const fontSize = Math.max(10, 11 / transform.k);
           ctx.font = `500 ${fontSize}px var(--font-sans)`;
-          ctx.fillStyle = dimmed ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.85)';
+          ctx.fillStyle = dimmed ? 'rgba(0,0,0,0.06)' : 'rgba(30,40,60,0.75)';
           ctx.textAlign = 'center';
           ctx.fillText(node.label, node.x, node.y + r + fontSize + 2);
         }
@@ -466,11 +468,12 @@ export default function KnowledgeGraph({ nodes, edges, highlightedNodeIds, onNod
           position: 'absolute',
           bottom: 20,
           left: 20,
-          backgroundColor: 'rgba(11,13,19,0.85)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          backgroundColor: 'rgba(255,255,255,0.88)',
+          border: '1px solid var(--border-subtle)',
           borderRadius: 10,
           padding: '10px 14px',
           backdropFilter: 'blur(12px)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
           display: 'flex',
           flexDirection: 'column',
           gap: 6,
@@ -491,7 +494,7 @@ export default function KnowledgeGraph({ nodes, edges, highlightedNodeIds, onNod
               style={{
                 fontFamily: 'var(--font-sans)',
                 fontSize: 10,
-                color: 'rgba(255,255,255,0.5)',
+                color: 'var(--text-tertiary)',
                 letterSpacing: '0.04em',
               }}
             >

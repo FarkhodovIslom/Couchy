@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { GraphNode, GraphEdge } from '@kibo/shared';
 import { getGraphSnapshot } from '../../lib/api';
 import KnowledgeGraph from '../../components/KnowledgeGraph';
+import { ChevronLeft, X } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Node type badge colors (matches KnowledgeGraph)                            */
@@ -88,10 +89,11 @@ function GraphPageInner() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: 56,
-          padding: '0 24px',
+          height: 48,
+          padding: '0 20px',
           borderBottom: '1px solid var(--border-subtle)',
           backgroundColor: 'var(--bg-surface)',
+
           flexShrink: 0,
         }}
       >
@@ -101,7 +103,7 @@ function GraphPageInner() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
+            gap: 4,
             fontFamily: 'var(--font-sans)',
             fontSize: 'var(--text-sm)',
             color: 'var(--text-secondary)',
@@ -111,7 +113,7 @@ function GraphPageInner() {
           onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.color = 'var(--accent)')}
           onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.color = 'var(--text-secondary)')}
         >
-          <span style={{ fontSize: 16, lineHeight: 1 }}>←</span>
+          <ChevronLeft size={16} />
           Back
         </Link>
 
@@ -182,7 +184,7 @@ function GraphPageInner() {
 
         {/* ---- Node Popover ---- */}
         {selectedNode && (
-          <div
+           <div
             className="anim-spring-in"
             style={{
               position: 'absolute',
@@ -193,7 +195,8 @@ function GraphPageInner() {
               border: '1px solid var(--border)',
               borderRadius: 12,
               padding: 20,
-              boxShadow: '0 12px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.04)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+
               zIndex: 50,
             }}
           >
@@ -228,7 +231,7 @@ function GraphPageInner() {
                 e.currentTarget.style.color = 'var(--text-tertiary)';
               }}
             >
-              ✕
+              <X size={14} />
             </button>
 
             {/* Node label */}

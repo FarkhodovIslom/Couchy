@@ -88,27 +88,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setHydrated(true);
   }, []);
 
-  // Persist to sessionStorage on change
-  useEffect(() => {
-    if (!hydrated) return;
-    if (session) {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    } else {
-      sessionStorage.removeItem(STORAGE_KEY);
-    }
-  }, [session, hydrated]);
-
+  // Write synchronously so data survives router.push()
   const setSession = useCallback((data: SessionData) => {
     setSessionState(data);
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
   }, []);
 
   const clearSession = useCallback(() => {
     setSessionState(null);
-    sessionStorage.removeItem(STORAGE_KEY);
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
   }, []);
 
   const updateSteps = useCallback((steps: LearningStep[]) => {
-    setSessionState((prev) => (prev ? { ...prev, steps } : null));
+    setSessionState((prev) => {
+      if (!prev) return null;
+      const next = { ...prev, steps };
+      try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
   }, []);
 
   const value: SessionContextValue = {

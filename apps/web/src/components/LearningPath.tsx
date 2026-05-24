@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { LearningStep } from '@kibo/shared';
 import { toggleStep, startSimulation } from '../lib/api';
+import { Zap, CheckCircle2, Circle, CircleDot } from 'lucide-react';
 
 interface Props {
   sessionId: string;
@@ -107,17 +108,14 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
           const isActive = i === activeStepIndex;
           const isCompleting = completing === step.id;
 
-          let dotChar = '○';
-          let dotColor = 'var(--text-tertiary)';
+          let dotIcon = <Circle size={12} style={{ color: 'var(--text-tertiary)' }} />;
           let textColor = 'var(--text-tertiary)';
 
           if (isCompleted) {
-            dotChar = '✓';
-            dotColor = 'var(--success)';
+            dotIcon = <CheckCircle2 size={12} style={{ color: 'var(--success)' }} />;
             textColor = 'var(--text-tertiary)';
           } else if (isActive) {
-            dotChar = '●';
-            dotColor = 'var(--accent)';
+            dotIcon = <CircleDot size={12} style={{ color: 'var(--accent)' }} />;
             textColor = 'var(--text-primary)';
           }
 
@@ -147,17 +145,15 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
               {/* Dot indicator */}
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--text-xs)',
-                  color: dotColor,
                   flexShrink: 0,
-                  width: '12px',
-                  textAlign: 'center',
-                  display: 'inline-block',
+                  width: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   animation: isCompleting ? `step-done var(--dur-slow) var(--ease-spring)` : 'none',
                 }}
               >
-                {dotChar}
+                {dotIcon}
               </span>
 
               {/* Step title */}
@@ -224,7 +220,7 @@ export default function LearningPath({ sessionId, steps, onStepsChange, onAskQue
             if (!simulating) e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          ⚡ {simulating ? 'Запуск...' : 'Запустить симуляцию'}
+          <Zap size={12} /> {simulating ? 'Запуск...' : 'Запустить симуляцию'}
         </button>
       </div>
 

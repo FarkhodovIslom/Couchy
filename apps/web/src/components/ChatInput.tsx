@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
+import { Send, Square } from 'lucide-react';
 
 interface Props {
   value: string;
@@ -113,7 +114,7 @@ export default function ChatInput({ value, onChange, onSubmit, onStop, isStreami
         }}
         title={isStreaming ? 'Остановить генерацию' : 'Отправить'}
       >
-        {isStreaming ? '■' : '→'}
+        {isStreaming ? <Square size={14} /> : <Send size={14} />}
       </button>
     </div>
   );
