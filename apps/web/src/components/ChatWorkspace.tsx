@@ -11,6 +11,7 @@ import { getGraphSnapshot } from '../lib/api';
 import { useAlerts } from '../hooks/useAlerts';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { useChat } from '../hooks/useChat';
+import { useSession } from '../lib/SessionProvider';
 
 interface Props {
   sessionId: string;
@@ -21,6 +22,7 @@ interface Props {
 
 export default function ChatWorkspace({ sessionId, steps: initialSteps, userName }: Props) {
   const { steps, setSteps, markStepComplete } = useOnboarding(sessionId, initialSteps);
+  const { updateSteps } = useSession();
   const { alerts, addAlerts, markRead } = useAlerts(sessionId);
 
   const [nodes, setNodes] = useState<GraphNode[]>([]);
@@ -109,7 +111,7 @@ export default function ChatWorkspace({ sessionId, steps: initialSteps, userName
       style={{
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
-        height: '100vh',
+        height: '100%',
         overflow: 'hidden',
         backgroundColor: 'var(--bg-base)',
       }}

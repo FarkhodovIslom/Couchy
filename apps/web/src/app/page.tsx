@@ -1,38 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
-import { LearningStep, UserRole } from '@kibo/shared';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from '../lib/SessionProvider';
 import OnboardingScreen from '../components/OnboardingScreen';
-import ChatWorkspace from '../components/ChatWorkspace';
+import { createSessionData } from '../lib/SessionProvider';
+import { LearningStep, UserRole } from '@kibo/shared';
 
 export default function Home() {
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [steps, setSteps]         = useState<LearningStep[]>([]);
-  const [userName, setUserName]   = useState('');
-  const [role, setRole]           = useState<UserRole>('junior_backend');
+  const router = useRouter();
+  const { session, setSession, isAuthenticated } = useSession();
+
+  // If already authenticated, redirect to chat
+  useEffect(() => {
+    if (isAuthenticated && session) {
+      router.replace(`/chat/${session.sessionId}`);
+    }
+  }, [isAuthenticated, session, router]);
 
   const handleStart = (
-    sid: string,
-    learningPath: LearningStep[],
+    sessionId: string,
+    steps: LearningStep[],
     name: string,
-    r: UserRole,
+    role: UserRole,
   ) => {
-    setSessionId(sid);
-    setSteps(learningPath);
-    setUserName(name);
-    setRole(r);
+    const sessionData = createSessionData(sessionId, name, role, steps);
+    setSession(sessionData);
+    router.push(`/chat/${sessionId}`);
   };
 
-  if (!sessionId) {
-    return <OnboardingScreen onStart={handleStart} />;
+  if (isAuthenticated) {
+    // Show nothing while redirecting
+    return null;
   }
 
-  return (
-    <ChatWorkspace
-      sessionId={sessionId}
-      steps={steps}
-      userName={userName}
-      role={role}
-    />
-  );
+  return <OnboardingScreen onStart={handleStart} />;
 }

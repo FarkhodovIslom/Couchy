@@ -75,7 +75,7 @@ function GraphPageInner() {
     <div
       className="anim-page-enter"
       style={{
-        height: '100vh',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: 'var(--bg-base)',
@@ -365,7 +365,7 @@ export default function GraphPage() {
       fallback={
         <div
           style={{
-            height: '100vh',
+            height: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

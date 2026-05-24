@@ -1,18 +1,20 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, DM_Sans } from 'next/font/google';
 import './globals.css';
+import { SessionProvider } from '../lib/SessionProvider';
+import AppShell from '../components/AppShell';
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-jetbrains',
-  weight: ['400', '500'],
+  weight: ['400', '500', '600'],
   display: 'swap',
 });
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-dm-sans',
-  weight: ['400', '500'],
+  weight: ['400', '500', '600'],
   display: 'swap',
 });
 
@@ -30,7 +32,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className={`${jetbrainsMono.variable} ${dmSans.variable}`}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <SessionProvider>
+          <AppShell>{children}</AppShell>
+        </SessionProvider>
+      </body>
     </html>
   );
 }

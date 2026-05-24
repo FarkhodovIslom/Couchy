@@ -1,21 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { LearningStep, UserRole } from '@kibo/shared';
 import OnboardingScreen from '../../components/OnboardingScreen';
 import { useRouter } from 'next/navigation';
+import { useSession, createSessionData } from '../../lib/SessionProvider';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { setSession } = useSession();
 
   const handleStart = (
     sessionId: string,
-    _steps: LearningStep[],
-    _name: string,
-    _role: UserRole,
+    steps: LearningStep[],
+    name: string,
+    role: UserRole,
   ) => {
-    // Store session in sessionStorage so chat page can pick it up
-    sessionStorage.setItem(`session_${sessionId}`, JSON.stringify({ steps: _steps, name: _name, role: _role }));
+    const sessionData = createSessionData(sessionId, name, role, steps);
+    setSession(sessionData);
     router.push(`/chat/${sessionId}`);
   };
 
