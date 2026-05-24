@@ -1,7 +1,7 @@
 # Kibo AI — Manual Testing Guide
 
 **Base URL:** `http://localhost:3001/api`  
-**Frontend:** `http://localhost:3000`
+**Frontend:** `http://localhost:8000`
 
 Prerequisites: API running (`bun --hot src/main.ts` in `apps/api/`), `GEMINI_API_KEY` set in `.env`.
 
@@ -488,7 +488,7 @@ curl -s -X POST http://localhost:3001/api/simulation/stop | jq .
 Start frontend: `cd apps/web && bun dev`
 
 ### 10.1 Onboarding flow
-1. Open `http://localhost:3000`
+1. Open `http://localhost:8000`
 2. Enter name and select **Junior Backend**
 3. Click submit
 4. **Expected:** Transition animation plays, `ChatWorkspace` loads with 3-panel layout
@@ -538,7 +538,7 @@ On the onboarding screen verify the role selector contains:
    - Tapping backdrop closes drawers
 
 ### 10.9 Lead Report page
-1. After completing §10.4 (so alerts exist), navigate to `http://localhost:3000/report/<sessionId>`
+1. After completing §10.4 (so alerts exist), navigate to `http://localhost:8000/report/<sessionId>`
 2. **Expected:**
    - Three stat cards: Total Alerts, Unread, Gap Nodes
    - "By Type" section shows alert breakdown
@@ -547,7 +547,7 @@ On the onboarding screen verify the role selector contains:
 
 ### 10.10 `/chat/[sessionId]` direct navigation
 1. Copy a `sessionId` from a previous onboarding
-2. Navigate directly to `http://localhost:3000/chat/<sessionId>`
+2. Navigate directly to `http://localhost:8000/chat/<sessionId>`
 3. **Expected:** ChatWorkspace loads (picks up session data or falls back to `getLearningPath`)
 
 ---

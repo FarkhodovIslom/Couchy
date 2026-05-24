@@ -67,7 +67,7 @@ kibo/                              ← root
 │   │   ├── templates/             ← SA/BT/BA templates
 │   │   ├── .env
 │   │   └── package.json
-│   └── web/                       ← Next.js 14 + App Router (port 3000)
+│   └── web/                       ← Next.js 14 + App Router (port 8000)
 │       ├── src/
 │       │   ├── app/
 │       │   │   ├── onboarding/page.tsx
@@ -1147,7 +1147,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     ports:
-      - '3000:3000'
+      - '8000:8000'
     environment:
       - NEXT_PUBLIC_API_URL=https://your-domain.com/api
     depends_on:
@@ -1156,7 +1156,7 @@ services:
     restart: unless-stopped
 
 # Nginx — на хосте, не в Docker
-# Nginx проксирует :80/:443 → :3000 (web) и :3001 (api)
+# Nginx проксирует :80/:443 → :8000 (web) и :3001 (api)
 # SSE требует: proxy_buffering off; proxy_cache off;
 ```
 
@@ -1167,7 +1167,7 @@ services:
 ```nginx
 # nginx/nginx.conf
 
-upstream web { server 127.0.0.1:3000; }
+upstream web { server 127.0.0.1:8000; }
 upstream api { server 127.0.0.1:3001; }
 
 server {
@@ -1227,7 +1227,7 @@ GRAPH_DB_PATH=./graph.db
 
 # Server
 PORT=3001
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=http://localhost:8000
 
 # Limits
 TOKEN_LIMIT=8000                # flush threshold для MemoryService

@@ -12,7 +12,7 @@ npm install
 # Start both frontend and backend (Turborepo parallel dev)
 npm run dev
 
-# Frontend only (Next.js on :3000)
+# Frontend only (Next.js on :8000)
 cd apps/web && bun dev
 
 # Backend only (NestJS on Bun, hot reload, on :3001)
@@ -41,7 +41,7 @@ Optional: `PORT=3001`, `GRAPH_DB_PATH=./graph.db`
 
 ### Monorepo Layout
 - **`apps/api/`** — NestJS backend on Bun runtime (port 3001)
-- **`apps/web/`** — Next.js 14 App Router frontend (port 3000)
+- **`apps/web/`** — Next.js 14 App Router frontend (port 8000)
 - **`packages/shared/`** — TypeScript types shared by both apps, imported as `@kibo/shared`
 - **`memory/`** — Markdown files for long-term memory (global + per-session + daily logs)
 - **`nginx/`** — Reverse proxy config with SSE buffering disabled

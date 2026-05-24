@@ -106,7 +106,7 @@ Kibo/ (Monorepo)
    ```bash
    npm run dev
    ```
-   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - Frontend: [http://localhost:8000](http://localhost:8000)
    - Backend API: [http://localhost:3001](http://localhost:3001)
 
 ### Запуск через Docker (Production Ready)

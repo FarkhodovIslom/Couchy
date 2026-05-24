@@ -23,7 +23,7 @@ The project is organized as a **Turborepo** monorepo:
 
 ## ⚡ Key Commands
 - `npm install`: Install dependencies for the entire monorepo.
-- `npm run dev`: Start both frontend (port 3000) and backend (port 3001) in development mode.
+- `npm run dev`: Start both frontend (port 8000) and backend (port 3001) in development mode.
 - `npm run build`: Build all applications and packages.
 - `npm run lint`: Run linting across the workspace.
 
