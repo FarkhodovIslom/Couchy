@@ -2,6 +2,7 @@
 
 > **Build with AI EdTech Hackathon 2026** · Track: Corporate Education
 
+> [Kibo AI](https://kibo.i37.uz/)
 
 ---
 
