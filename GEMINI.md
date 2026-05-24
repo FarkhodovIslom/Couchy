@@ -1,7 +1,7 @@
-# 🛋️ Couchy — Project Context
+# 🛋️ Kibo — Project Context
 
 ## Project Overview
-**Couchy** is an intelligent AI assistant designed for corporate developer education and onboarding. It serves as the "living memory" of a team, knowing the codebase, technical specifications, and internal processes in real-time.
+**Kibo** is an intelligent AI assistant designed for corporate developer education and onboarding. It serves as the "living memory" of a team, knowing the codebase, technical specifications, and internal processes in real-time.
 
 - **Primary Goal:** Reduce developer onboarding time from 2 weeks to 3 days.
 - **Core Strategy:** Use agentic logic to answer questions, detect knowledge gaps, and provide proactive alerts about code dependencies.
@@ -28,7 +28,7 @@ The project is organized as a **Turborepo** monorepo:
 - `npm run lint`: Run linting across the workspace.
 
 ## 🛠️ Development Conventions
-- **Type Safety:** Always use shared types from `@couchy/shared` for cross-app communication.
+- **Type Safety:** Always use shared types from `@kibo/shared` for cross-app communication.
 - **API Prefix:** All backend routes are prefixed with `/api`.
 - **CORS:** Enabled for all origins in development to facilitate frontend-backend integration.
 - **Streaming:** The assistant uses SSE (Server-Sent Events) for real-time response streaming.

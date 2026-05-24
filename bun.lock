@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "couchy-monorepo",
+      "name": "kibo-monorepo",
       "devDependencies": {
         "prettier": "^3.2.5",
         "turbo": "^2.0.4",
